@@ -2,147 +2,470 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy – SearchThatTerm</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Privacy Policy for SearchThatTerm Chrome Extension">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #7c3aed;
+            --primary-hover: #8b5cf6;
+            --primary-light: rgba(124, 58, 237, 0.1);
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: rgba(124, 58, 237, 0.2);
+        }
+
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            line-height: 1.6;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
-            color: #222;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
         }
 
-        h1,
-        h2 {
-            color: #111;
+        /* Gradient background */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
         }
 
-        ul {
-            margin-left: 20px;
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .logo-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 120px 40px 80px;
+        }
+
+        .page-header {
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .section ul li {
+            color: var(--text-secondary);
+            font-size: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .section ul li:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .section ul li:first-child {
+            padding-top: 0;
+        }
+
+        .section ul li::before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .section ul li strong {
+            color: var(--text-primary);
         }
 
         code {
-            background: #f4f4f4;
-            padding: 2px 4px;
-            border-radius: 4px;
+            background: var(--primary-light);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--primary-hover);
         }
 
+        a {
+            color: var(--primary-hover);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary);
+        }
+
+        /* Footer */
         footer {
+            padding: 40px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-card);
             margin-top: 40px;
-            font-size: 0.9em;
-            color: #555;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-left span {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .last-updated {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 16px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .content {
+                padding: 100px 20px 60px;
+            }
+
+            .page-header h1 {
+                font-size: 28px;
+            }
+
+            .section {
+                padding: 24px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
 
 <body>
+    <div class="gradient-bg"></div>
 
-    <h1>Privacy Policy for SearchThatTerm</h1>
+    <!-- Navigation -->
+    <nav>
+        <a href="index.html" class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z" />
+                </svg>
+            </div>
+            <span class="logo-text">SearchThatTerm</span>
+        </a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="index.html#features">Features</a>
+            <a href="https://github.com/Ritesh381/searchThatTerm" target="_blank">GitHub</a>
+        </div>
+    </nav>
 
-    <p>
-        SearchThatTerm is a Chrome extension designed to help users understand selected text on web pages by providing
-        AI-generated explanations and contextual follow-up answers.
-    </p>
+    <!-- Main Content -->
+    <main class="content">
+        <div class="page-header">
+            <h1>Privacy Policy</h1>
+            <p>How SearchThatTerm handles your data</p>
+        </div>
 
-    <h2>Overview</h2>
-    <p>
-        This privacy policy explains what data the extension accesses, how it is used, and under what conditions data is
-        transmitted. The extension is designed to operate only on explicit user action and does not perform background
-        data collection.
-    </p>
+        <div class="section">
+            <h2>Overview</h2>
+            <p>
+                SearchThatTerm is a Chrome extension designed to help users understand selected text on web pages by
+                providing AI-generated explanations and contextual follow-up answers.
+            </p>
+            <p>
+                This privacy policy explains what data the extension accesses, how it is used, and under what
+                conditions data is transmitted. The extension is designed to operate only on explicit user action
+                and does not perform background data collection.
+            </p>
+        </div>
 
-    <h2>Data Accessed by the Extension</h2>
-    <p>
-        SearchThatTerm accesses the following data <strong>only when initiated by the user</strong>:
-    </p>
-    <ul>
-        <li>
-            <strong>User-selected text:</strong> Text that the user explicitly selects on a webpage and submits by
-            clicking the ✨ button.
-        </li>
-        <li>
-            <strong>User-provided API key:</strong> An OpenRouter API key entered by the user in the extension settings.
-        </li>
-    </ul>
+        <div class="section">
+            <h2>Data Accessed by the Extension</h2>
+            <p>SearchThatTerm accesses the following data <strong>only when initiated by the user</strong>:</p>
+            <ul>
+                <li>
+                    <strong>User-selected text:</strong> Text that the user explicitly selects on a webpage and
+                    submits by clicking the trigger button.
+                </li>
+                <li>
+                    <strong>User-provided API key:</strong> An OpenRouter API key entered by the user in the
+                    extension settings.
+                </li>
+            </ul>
+        </div>
 
-    <h2>When Data Is Sent</h2>
-    <p>
-        No data is accessed or transmitted automatically. Data is sent only when:
-    </p>
-    <ul>
-        <li>The user selects text on a webpage</li>
-        <li>The user explicitly triggers the extension by clicking the ✨ button or related action</li>
-    </ul>
+        <div class="section">
+            <h2>When Data Is Sent</h2>
+            <p>No data is accessed or transmitted automatically. Data is sent only when:</p>
+            <ul>
+                <li>The user selects text on a webpage</li>
+                <li>The user explicitly triggers the extension by clicking the button or related action</li>
+            </ul>
+        </div>
 
-    <h2>Where Data Is Sent</h2>
-    <p>
-        Selected text is sent to <strong>OpenRouter</strong> (<code>https://openrouter.ai</code>) for the sole purpose
-        of generating AI-based explanations and responses.
-    </p>
+        <div class="section">
+            <h2>Where Data Is Sent</h2>
+            <p>
+                Selected text is sent to <strong>OpenRouter</strong> (<code>https://openrouter.ai</code>) for the
+                sole purpose of generating AI-based explanations and responses.
+            </p>
+            <p>
+                SearchThatTerm does not directly communicate with individual AI model providers. All requests are
+                routed through OpenRouter according to the user's selected model.
+            </p>
+        </div>
 
-    <p>
-        SearchThatTerm does not directly communicate with individual AI model providers. All requests are routed through
-        OpenRouter according to the user’s selected model.
-    </p>
+        <div class="section">
+            <h2>Data Storage</h2>
+            <ul>
+                <li>The OpenRouter API key is stored locally using <code>chrome.storage</code>.</li>
+                <li>The API key is not transmitted to any server other than OpenRouter.</li>
+                <li>SearchThatTerm does not maintain its own backend and does not store user data.</li>
+            </ul>
+        </div>
 
-    <h2>Data Storage</h2>
-    <ul>
-        <li>
-            The OpenRouter API key is stored locally using <code>chrome.storage</code>.
-        </li>
-        <li>
-            The API key is not transmitted to any server other than OpenRouter.
-        </li>
-        <li>
-            SearchThatTerm does not maintain its own backend and does not store user data.
-        </li>
-    </ul>
+        <div class="section">
+            <h2>What the Extension Does NOT Do</h2>
+            <ul>
+                <li>Does not collect browsing history</li>
+                <li>Does not monitor or log page content automatically</li>
+                <li>Does not run background analytics or tracking</li>
+                <li>Does not sell, share, or retain user data</li>
+                <li>Does not inject advertisements</li>
+            </ul>
+        </div>
 
-    <h2>What the Extension Does NOT Do</h2>
-    <ul>
-        <li>Does not collect browsing history</li>
-        <li>Does not monitor or log page content automatically</li>
-        <li>Does not run background analytics or tracking</li>
-        <li>Does not sell, share, or retain user data</li>
-        <li>Does not inject advertisements</li>
-    </ul>
+        <div class="section">
+            <h2>Permissions Explanation</h2>
+            <ul>
+                <li>
+                    <strong>activeTab:</strong> Used to access only the user-selected text on the currently active
+                    page after explicit user interaction.
+                </li>
+                <li>
+                    <strong>storage:</strong> Used to store the user's OpenRouter API key and extension settings
+                    locally.
+                </li>
+            </ul>
+        </div>
 
-    <h2>Permissions Explanation</h2>
-    <ul>
-        <li>
-            <strong>activeTab:</strong> Used to access only the user-selected text on the currently active page after
-            explicit user interaction.
-        </li>
-        <li>
-            <strong>storage:</strong> Used to store the user’s OpenRouter API key and extension settings locally.
-        </li>
-    </ul>
+        <div class="section">
+            <h2>Third-Party Services</h2>
+            <p>
+                SearchThatTerm relies on OpenRouter for AI responses. The handling of data by OpenRouter is
+                governed by their own <a href="https://openrouter.ai/privacy" target="_blank">privacy policy</a>
+                and terms of service.
+            </p>
+        </div>
 
-    <h2>Third-Party Services</h2>
-    <p>
-        SearchThatTerm relies on OpenRouter for AI responses. The handling of data by OpenRouter is governed by their
-        own privacy policy and terms of service.
-    </p>
+        <div class="section">
+            <h2>User Control</h2>
+            <p>
+                Users have full control over when the extension operates. If no action is taken, the extension
+                remains inactive. The extension can be disabled or removed at any time through Chrome's extension
+                settings.
+            </p>
+        </div>
 
-    <h2>User Control</h2>
-    <p>
-        Users have full control over when the extension operates. If no action is taken, the extension remains inactive.
-        The extension can be disabled or removed at any time through Chrome’s extension settings.
-    </p>
+        <div class="section">
+            <h2>Changes to This Policy</h2>
+            <p>
+                This privacy policy may be updated to reflect changes in functionality or compliance requirements.
+                Any updates will be reflected on this page.
+            </p>
+        </div>
 
-    <h2>Changes to This Policy</h2>
-    <p>
-        This privacy policy may be updated to reflect changes in functionality or compliance requirements. Any updates
-        will be reflected on this page.
-    </p>
+        <div class="last-updated">
+            Last updated: January 2026
+        </div>
+    </main>
 
+    <!-- Footer -->
     <footer>
-        <p>Last updated: <strong>January 2026</strong></p>
+        <div class="footer-content">
+            <div class="footer-left">
+                <div class="logo-icon" style="width: 32px; height: 32px;">
+                    <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: white;">
+                        <path
+                            d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z" />
+                    </svg>
+                </div>
+                <span>© Made with ❤️ by Ritesh Prajapati. Open source under MIT License.</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="https://github.com/Ritesh381/searchThatTerm" target="_blank">GitHub</a>
+                <a href="https://openrouter.ai" target="_blank">OpenRouter</a>
+            </div>
+        </div>
     </footer>
-
 </body>
 
 </html>
