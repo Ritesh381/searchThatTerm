@@ -1,0 +1,181 @@
+// Background service worker for SearchThatTerm extension
+
+// Default settings (pre-configured from .env)
+const DEFAULT_SETTINGS = {
+  apiKey: '',
+  model: 'xiaomi/mimo-v2-flash:free',
+  theme: 'dark'
+};
+
+// Initialize settings on install
+chrome.runtime.onInstalled.addListener(async () => {
+  const existingSettings = await chrome.storage.sync.get(['apiKey', 'model', 'theme']);
+
+  const settings = {
+    apiKey: existingSettings.apiKey || DEFAULT_SETTINGS.apiKey,
+    model: existingSettings.model || DEFAULT_SETTINGS.model,
+    theme: existingSettings.theme || DEFAULT_SETTINGS.theme
+  };
+
+  await chrome.storage.sync.set(settings);
+  console.log('SearchThatTerm: Settings initialized', settings);
+});
+
+// Handle messages from content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'getExplanation') {
+    handleStreamingExplanation(request.text, request.context, sender.tab.id);
+    sendResponse({ success: true, streaming: true });
+    return true;
+  }
+
+  if (request.action === 'chat') {
+    handleStreamingChat(request.messages, request.selectedText, sender.tab.id);
+    sendResponse({ success: true, streaming: true });
+    return true;
+  }
+
+  if (request.action === 'getSettings') {
+    chrome.storage.sync.get(['apiKey', 'model', 'theme'])
+      .then(settings => sendResponse({ success: true, data: settings }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+});
+
+// Stream explanation for selected text
+async function handleStreamingExplanation(text, context, tabId) {
+  const settings = await chrome.storage.sync.get(['apiKey', 'model']);
+
+  if (!settings.apiKey) {
+    sendStreamUpdate(tabId, { type: 'error', error: 'API key not configured. Click the extension icon to add your OpenRouter API key.' });
+    return;
+  }
+
+  const systemPrompt = `You are a helpful research assistant. When given a term or phrase, provide a clear, concise explanation in 2-3 sentences. Focus on the most essential information. If the context is provided, use it to give a more relevant explanation.
+
+Format your response as:
+- Start with a brief definition
+- Add one key insight or important detail
+- Keep it under 80 words`;
+
+  const userPrompt = context
+    ? `Explain this term/phrase: "${text}"\n\nContext from the page: "${context}"`
+    : `Explain this term/phrase: "${text}"`;
+
+  await streamOpenRouter(settings.apiKey, settings.model, [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ], tabId, 'explanation');
+}
+
+// Stream chat conversation
+async function handleStreamingChat(messages, selectedText, tabId) {
+  const settings = await chrome.storage.sync.get(['apiKey', 'model']);
+
+  if (!settings.apiKey) {
+    sendStreamUpdate(tabId, { type: 'error', error: 'API key not configured.' });
+    return;
+  }
+
+  const systemPrompt = `You are a knowledgeable research assistant helping someone understand a specific topic. The user initially selected this text: "${selectedText}"
+
+Your role:
+- Answer questions thoroughly but concisely
+- Use examples when helpful
+- If asked to elaborate, provide more detail
+- Stay focused on helping them understand the topic
+- Be conversational and helpful`;
+
+  const formattedMessages = [
+    { role: 'system', content: systemPrompt },
+    ...messages
+  ];
+
+  await streamOpenRouter(settings.apiKey, settings.model, formattedMessages, tabId, 'chat');
+}
+
+// Stream from OpenRouter API
+async function streamOpenRouter(apiKey, model, messages, tabId, messageType) {
+  try {
+    sendStreamUpdate(tabId, { type: 'start', messageType });
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'chrome-extension://searchthatterm',
+        'X-Title': 'SearchThatTerm'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: messages,
+        max_tokens: 500,
+        temperature: 0.7,
+        stream: true  // Enable streaming!
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        sendStreamUpdate(tabId, { type: 'done', content: fullContent, messageType });
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete SSE lines
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+        const data = trimmedLine.slice(6); // Remove 'data: ' prefix
+
+        if (data === '[DONE]') {
+          sendStreamUpdate(tabId, { type: 'done', content: fullContent, messageType });
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content;
+
+          if (delta) {
+            fullContent += delta;
+            sendStreamUpdate(tabId, { type: 'chunk', chunk: delta, content: fullContent, messageType });
+          }
+        } catch (e) {
+          // Skip malformed JSON chunks
+          console.log('Skipping malformed chunk:', data);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Streaming error:', error);
+    sendStreamUpdate(tabId, { type: 'error', error: error.message, messageType });
+  }
+}
+
+// Send stream update to content script
+function sendStreamUpdate(tabId, data) {
+  chrome.tabs.sendMessage(tabId, { action: 'streamUpdate', ...data }).catch(() => {
+    // Tab might be closed, ignore error
+  });
+}

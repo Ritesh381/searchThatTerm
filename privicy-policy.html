@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Privacy Policy – SearchThatTerm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: #222;
+        }
+
+        h1,
+        h2 {
+            color: #111;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Privacy Policy for SearchThatTerm</h1>
+
+    <p>
+        SearchThatTerm is a Chrome extension designed to help users understand selected text on web pages by providing
+        AI-generated explanations and contextual follow-up answers.
+    </p>
+
+    <h2>Overview</h2>
+    <p>
+        This privacy policy explains what data the extension accesses, how it is used, and under what conditions data is
+        transmitted. The extension is designed to operate only on explicit user action and does not perform background
+        data collection.
+    </p>
+
+    <h2>Data Accessed by the Extension</h2>
+    <p>
+        SearchThatTerm accesses the following data <strong>only when initiated by the user</strong>:
+    </p>
+    <ul>
+        <li>
+            <strong>User-selected text:</strong> Text that the user explicitly selects on a webpage and submits by
+            clicking the ✨ button.
+        </li>
+        <li>
+            <strong>User-provided API key:</strong> An OpenRouter API key entered by the user in the extension settings.
+        </li>
+    </ul>
+
+    <h2>When Data Is Sent</h2>
+    <p>
+        No data is accessed or transmitted automatically. Data is sent only when:
+    </p>
+    <ul>
+        <li>The user selects text on a webpage</li>
+        <li>The user explicitly triggers the extension by clicking the ✨ button or related action</li>
+    </ul>
+
+    <h2>Where Data Is Sent</h2>
+    <p>
+        Selected text is sent to <strong>OpenRouter</strong> (<code>https://openrouter.ai</code>) for the sole purpose
+        of generating AI-based explanations and responses.
+    </p>
+
+    <p>
+        SearchThatTerm does not directly communicate with individual AI model providers. All requests are routed through
+        OpenRouter according to the user’s selected model.
+    </p>
+
+    <h2>Data Storage</h2>
+    <ul>
+        <li>
+            The OpenRouter API key is stored locally using <code>chrome.storage</code>.
+        </li>
+        <li>
+            The API key is not transmitted to any server other than OpenRouter.
+        </li>
+        <li>
+            SearchThatTerm does not maintain its own backend and does not store user data.
+        </li>
+    </ul>
+
+    <h2>What the Extension Does NOT Do</h2>
+    <ul>
+        <li>Does not collect browsing history</li>
+        <li>Does not monitor or log page content automatically</li>
+        <li>Does not run background analytics or tracking</li>
+        <li>Does not sell, share, or retain user data</li>
+        <li>Does not inject advertisements</li>
+    </ul>
+
+    <h2>Permissions Explanation</h2>
+    <ul>
+        <li>
+            <strong>activeTab:</strong> Used to access only the user-selected text on the currently active page after
+            explicit user interaction.
+        </li>
+        <li>
+            <strong>storage:</strong> Used to store the user’s OpenRouter API key and extension settings locally.
+        </li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <p>
+        SearchThatTerm relies on OpenRouter for AI responses. The handling of data by OpenRouter is governed by their
+        own privacy policy and terms of service.
+    </p>
+
+    <h2>User Control</h2>
+    <p>
+        Users have full control over when the extension operates. If no action is taken, the extension remains inactive.
+        The extension can be disabled or removed at any time through Chrome’s extension settings.
+    </p>
+
+    <h2>Changes to This Policy</h2>
+    <p>
+        This privacy policy may be updated to reflect changes in functionality or compliance requirements. Any updates
+        will be reflected on this page.
+    </p>
+
+    <footer>
+        <p>Last updated: <strong>January 2026</strong></p>
+    </footer>
+
+</body>
+
+</html>
