@@ -18,8 +18,7 @@
     let dragOffsetX = 0;
     let dragOffsetY = 0;
 
-    // Remember last popup position
-    let savedPopupPosition = null;
+
 
     // Icons
     const ICONS = {
@@ -219,7 +218,10 @@
                     rect = range.getBoundingClientRect();
                 } catch (err) { }
 
-                showTriggerButton(e, text, getContext(selection), rect);
+                const context = getContext(selection);
+                const nearestHeading = getNearestHeading(selection);
+                
+                showTriggerButton(e, text, context, nearestHeading, rect);
             }
         }, 10);
     }
@@ -269,7 +271,47 @@
         return '';
     }
 
-    function showTriggerButton(e, text, context, rect) {
+    // Get nearest heading above the selection
+    function getNearestHeading(selection) {
+        try {
+            const anchorNode = selection.anchorNode;
+            if (!anchorNode) return '';
+
+            let element = anchorNode.parentElement;
+            
+            // Walk up the DOM to find headings
+            while (element && element !== document.body) {
+                // Check previous siblings for headings
+                let sibling = element.previousElementSibling;
+                while (sibling) {
+                    if (/^H[1-6]$/.test(sibling.tagName)) {
+                        return sibling.textContent.trim();
+                    }
+                    sibling = sibling.previousElementSibling;
+                }
+                
+                // Check parent's previous siblings
+                element = element.parentElement;
+            }
+            
+            // Fallback: find the first H1 on the page
+            const h1 = document.querySelector('h1');
+            if (h1) return h1.textContent.trim();
+            
+        } catch (e) { }
+        return '';
+    }
+
+    // Get page context info
+    function getPageContext() {
+        return {
+            pageTitle: document.title || '',
+            pageDomain: window.location.hostname || '',
+            pageUrl: window.location.href || ''
+        };
+    }
+
+    function showTriggerButton(e, text, context, nearestHeading, rect) {
         removeTriggerButton();
 
         triggerButton = document.createElement('button');
@@ -287,7 +329,7 @@
             clickEvent.preventDefault();
             clickEvent.stopPropagation();
             clickEvent.stopImmediatePropagation();
-            createPopup(text, context, rect);
+            createPopup(text, context, nearestHeading, rect);
             return false;
         };
 
@@ -315,16 +357,19 @@
         }
     }
 
-    function createPopup(selectedText, contextText, selectionRect) {
+    function createPopup(selectedText, contextText, nearestHeading, selectionRect) {
         removeTriggerButton();
 
         const popupId = generatePopupId();
+        const pageContext = getPageContext();
 
         const popupData = {
             id: popupId,
             element: null,
             selectedText: selectedText,
             contextText: contextText,
+            nearestHeading: nearestHeading,
+            pageContext: pageContext,
             chatMessages: [],
             isInChatMode: false,
             isLoading: true,
@@ -337,16 +382,13 @@
         popupEl.className = 'stt-popup';
         popupEl.id = popupId;
 
-        // Calculate position
+        // Calculate position - always next to selection
         let x, y;
 
         // Offset each popup slightly if there are others
         const offset = popups.length * 30;
 
-        if (savedPopupPosition && popups.length === 0) {
-            x = parseInt(savedPopupPosition.left);
-            y = parseInt(savedPopupPosition.top);
-        } else if (selectionRect) {
+        if (selectionRect) {
             x = selectionRect.left + window.scrollX + offset;
             y = selectionRect.bottom + window.scrollY + 10 + offset;
         } else {
@@ -374,11 +416,14 @@
         renderPopup(popupData);
         document.body.appendChild(popupEl);
 
-        // Request explanation
+        // Request explanation with full context
         chrome.runtime.sendMessage({
             action: 'getExplanation',
             text: selectedText,
-            context: contextText
+            context: contextText,
+            nearestHeading: nearestHeading,
+            pageTitle: pageContext.pageTitle,
+            pageDomain: pageContext.pageDomain
         });
     }
 
@@ -387,11 +432,6 @@
         if (index === -1) return;
 
         const popup = popups[index];
-
-        // Save position if this is the last popup
-        if (popups.length === 1) {
-            savedPopupPosition = popup.position;
-        }
 
         popup.element.remove();
         popups.splice(index, 1);

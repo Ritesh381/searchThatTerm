@@ -24,7 +24,14 @@ chrome.runtime.onInstalled.addListener(async () => {
 // Handle messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getExplanation') {
-    handleStreamingExplanation(request.text, request.context, sender.tab.id);
+    handleStreamingExplanation(
+      request.text, 
+      request.context, 
+      request.nearestHeading,
+      request.pageTitle,
+      request.pageDomain,
+      sender.tab.id
+    );
     sendResponse({ success: true, streaming: true });
     return true;
   }
@@ -44,7 +51,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Stream explanation for selected text
-async function handleStreamingExplanation(text, context, tabId) {
+async function handleStreamingExplanation(text, context, nearestHeading, pageTitle, pageDomain, tabId) {
   const settings = await chrome.storage.sync.get(['apiKey', 'model']);
 
   if (!settings.apiKey) {
@@ -52,16 +59,38 @@ async function handleStreamingExplanation(text, context, tabId) {
     return;
   }
 
-  const systemPrompt = `You are a helpful research assistant. When given a term or phrase, provide a clear, concise explanation in 2-3 sentences. Focus on the most essential information. If the context is provided, use it to give a more relevant explanation.
+  // Build context-aware system prompt
+  const systemPrompt = `You are a helpful research assistant. When given a term or phrase, provide a clear, concise explanation in 2-3 sentences. Focus on the most essential information.
+
+Use the provided context to give a more relevant, domain-specific explanation. The context includes:
+- The webpage title and domain (helps identify the topic/field)
+- The section heading (helps understand the specific subtopic)
+- Surrounding paragraph text (provides immediate context)
 
 Format your response as:
-- Start with a brief definition
+- Start with a brief definition relevant to the context
 - Add one key insight or important detail
 - Keep it under 80 words`;
 
-  const userPrompt = context
-    ? `Explain this term/phrase: "${text}"\n\nContext from the page: "${context}"`
-    : `Explain this term/phrase: "${text}"`;
+  // Build user prompt with all context
+  let userPrompt = `Explain this term/phrase: "${text}"`;
+  
+  // Add page context
+  if (pageTitle || pageDomain) {
+    userPrompt += `\n\n**Page Context:**`;
+    if (pageTitle) userPrompt += `\n- Page Title: "${pageTitle}"`;
+    if (pageDomain) userPrompt += `\n- Domain: ${pageDomain}`;
+  }
+  
+  // Add section heading
+  if (nearestHeading) {
+    userPrompt += `\n- Section: "${nearestHeading}"`;
+  }
+  
+  // Add surrounding text context
+  if (context && context !== text) {
+    userPrompt += `\n\n**Surrounding Text:**\n"${context}"`;
+  }
 
   await streamOpenRouter(settings.apiKey, settings.model, [
     { role: 'system', content: systemPrompt },
