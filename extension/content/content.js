@@ -84,8 +84,8 @@
     });
 
     function handleStreamUpdate(data) {
-        // Find the popup that's currently loading
-        const popup = popups.find(p => p.isLoading);
+        // Find the popup by ID (not just any loading popup)
+        const popup = popups.find(p => p.id === data.popupId);
         if (!popup) return;
 
         switch (data.type) {
@@ -416,9 +416,10 @@
         renderPopup(popupData);
         document.body.appendChild(popupEl);
 
-        // Request explanation with full context
+        // Request explanation with full context (include popupId for response tracking)
         chrome.runtime.sendMessage({
             action: 'getExplanation',
+            popupId: popupId,
             text: selectedText,
             context: contextText,
             nearestHeading: nearestHeading,
@@ -712,6 +713,7 @@
 
         chrome.runtime.sendMessage({
             action: 'chat',
+            popupId: popup.id,
             messages: apiMessages,
             selectedText: popup.selectedText
         });
