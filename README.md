@@ -2,6 +2,10 @@
 
 A Chrome extension that lets you instantly research any term or sentence without leaving your page. Get quick AI-powered summaries and dive deeper with a contextual chatbot.
 
+## 🎬 Demo Video
+
+Watch the setup and usage tutorial: **[YouTube Demo](https://www.youtube.com/watch?v=P3bIdckAjAo)**
+
 ## Features
 
 - **Instant Explanations** - Select any text and get a quick, concise explanation
@@ -96,16 +100,19 @@ The extension is designed with user privacy as a priority:
 ## Troubleshooting
 
 **Popup doesn't appear?**
+
 - Make sure you've added your API key in the extension settings
 - Try refreshing the page
 - Check if the extension is enabled in `chrome://extensions/`
 
 **Getting errors?**
+
 - Verify your API key is correct
 - Check your OpenRouter account has credits (for paid models)
 - Try switching to a free model
 
 **Extension not loading?**
+
 - Make sure you selected the `extension` folder (not the root folder) when loading unpacked
 - Check that Developer mode is enabled
 - Try removing and re-adding the extension
