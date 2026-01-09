@@ -18,6 +18,9 @@
   let dragOffsetX = 0;
   let dragOffsetY = 0;
 
+  // Scroll with page preference (true = absolute positioning, false = fixed positioning)
+  let scrollWithPage = true;
+
   // Icons
   const ICONS = {
     close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`,
@@ -96,7 +99,52 @@
       });
       console.log('%c==========================================', 'color: #a855f7; font-weight: bold;');
     }
+
+    // Handle scroll with page preference update from popup
+    if (message.action === 'updateScrollWithPage') {
+      scrollWithPage = message.scrollWithPage;
+      updateAllPopupsPositioning();
+    }
   });
+
+  // Load scroll with page preference on init
+  chrome.storage.sync.get(['scrollWithPage'], (settings) => {
+    scrollWithPage = settings.scrollWithPage !== false; // Default to true
+  });
+
+  // Update positioning for all popups and trigger button when setting changes
+  function updateAllPopupsPositioning() {
+    // Update trigger button if exists
+    if (triggerButton) {
+      if (scrollWithPage) {
+        triggerButton.classList.remove('stt-fixed');
+      } else {
+        triggerButton.classList.add('stt-fixed');
+        // Convert from page coordinates to viewport coordinates
+        const currentLeft = parseInt(triggerButton.style.left);
+        const currentTop = parseInt(triggerButton.style.top);
+        triggerButton.style.left = `${currentLeft - window.scrollX}px`;
+        triggerButton.style.top = `${currentTop - window.scrollY}px`;
+      }
+    }
+
+    // Update all popups
+    popups.forEach((popup) => {
+      if (!popup.element) return;
+      
+      if (scrollWithPage) {
+        popup.element.classList.remove('stt-fixed');
+      } else {
+        popup.element.classList.add('stt-fixed');
+        // Convert from page coordinates to viewport coordinates
+        const currentLeft = parseInt(popup.element.style.left);
+        const currentTop = parseInt(popup.element.style.top);
+        popup.element.style.left = `${currentLeft - window.scrollX}px`;
+        popup.element.style.top = `${currentTop - window.scrollY}px`;
+        popup.position = { left: popup.element.style.left, top: popup.element.style.top };
+      }
+    });
+  }
 
   function handleStreamUpdate(data) {
     // Find the popup by ID (not just any loading popup)
@@ -280,9 +328,17 @@
 
     e.preventDefault();
 
-    const newX = Math.min(e.pageX - dragOffsetX, window.innerWidth - popup.element.offsetWidth);
-    // Bug 1 Fix: Ensure top is never less than 0 when dragging
-    const newY = Math.max(0, e.pageY - dragOffsetY);
+    let newX, newY;
+    
+    if (!scrollWithPage) {
+      // Fixed positioning - use client coordinates
+      newX = Math.min(e.clientX - dragOffsetX, window.innerWidth - popup.element.offsetWidth);
+      newY = Math.max(0, e.clientY - dragOffsetY);
+    } else {
+      // Absolute positioning - use page coordinates
+      newX = Math.min(e.pageX - dragOffsetX, window.innerWidth + window.scrollX - popup.element.offsetWidth);
+      newY = Math.max(0, e.pageY - dragOffsetY);
+    }
 
     popup.element.style.left = `${newX}px`;
     popup.element.style.top = `${newY}px`;
@@ -460,12 +516,21 @@
     triggerButton.innerHTML = ICONS.sparkle;
     triggerButton.title = "Explain this";
 
-    const x = e.pageX + 10;
-    const y = e.pageY - 45;
-
-    triggerButton.style.left = `${x}px`;
-    // Bug 1 Fix: Ensure top is never less than 0
-    triggerButton.style.top = `${Math.max(0, y)}px`;
+    // Apply fixed positioning if scrollWithPage is disabled
+    if (!scrollWithPage) {
+      triggerButton.classList.add("stt-fixed");
+      // Use client coordinates for fixed positioning
+      const x = e.clientX + 10;
+      const y = e.clientY - 45;
+      triggerButton.style.left = `${x}px`;
+      triggerButton.style.top = `${Math.max(0, y)}px`;
+    } else {
+      // Use page coordinates for absolute positioning
+      const x = e.pageX + 10;
+      const y = e.pageY - 45;
+      triggerButton.style.left = `${x}px`;
+      triggerButton.style.top = `${Math.max(0, y)}px`;
+    }
 
     triggerButton.onclick = function (clickEvent) {
       clickEvent.preventDefault();
@@ -529,27 +594,53 @@
     popupEl.className = "stt-popup";
     popupEl.id = popupId;
 
+    // Apply fixed positioning if scrollWithPage is disabled
+    if (!scrollWithPage) {
+      popupEl.classList.add("stt-fixed");
+    }
+
     // Calculate position - always next to selection
     let x, y;
 
     // Offset each popup slightly if there are others
     const offset = popups.length * 30;
 
-    if (selectionRect) {
-      x = selectionRect.left + window.scrollX + offset;
-      y = selectionRect.bottom + window.scrollY + 10 + offset;
-    } else {
-      x = window.scrollX + window.innerWidth / 2 - 190 + offset;
-      y = window.scrollY + window.innerHeight / 3 + offset;
-    }
+    if (!scrollWithPage) {
+      // Fixed positioning - use viewport-relative coordinates
+      if (selectionRect) {
+        x = selectionRect.left + offset;
+        y = selectionRect.bottom + 10 + offset;
+      } else {
+        x = window.innerWidth / 2 - 190 + offset;
+        y = window.innerHeight / 3 + offset;
+      }
 
-    // Keep within viewport
-    const viewportWidth = window.innerWidth;
-    if (x + 380 > viewportWidth + window.scrollX) {
-      x = viewportWidth + window.scrollX - 400;
-    }
-    if (x < window.scrollX + 10) {
-      x = window.scrollX + 10;
+      // Keep within viewport
+      const viewportWidth = window.innerWidth;
+      if (x + 380 > viewportWidth) {
+        x = viewportWidth - 400;
+      }
+      if (x < 10) {
+        x = 10;
+      }
+    } else {
+      // Absolute positioning - use page-relative coordinates
+      if (selectionRect) {
+        x = selectionRect.left + window.scrollX + offset;
+        y = selectionRect.bottom + window.scrollY + 10 + offset;
+      } else {
+        x = window.scrollX + window.innerWidth / 2 - 190 + offset;
+        y = window.scrollY + window.innerHeight / 3 + offset;
+      }
+
+      // Keep within viewport
+      const viewportWidth = window.innerWidth;
+      if (x + 380 > viewportWidth + window.scrollX) {
+        x = viewportWidth + window.scrollX - 400;
+      }
+      if (x < window.scrollX + 10) {
+        x = window.scrollX + 10;
+      }
     }
 
     popupEl.style.left = `${Math.max(10, x)}px`;

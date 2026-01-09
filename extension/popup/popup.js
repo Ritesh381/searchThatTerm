@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusText = document.getElementById('status-text');
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
+    const scrollWithPageToggle = document.getElementById('scroll-with-page');
 
     // Add model elements
     const addModelBtn = document.getElementById('add-model-btn');
@@ -74,6 +75,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateStatus('');
             }
         }, 500);
+    });
+
+    // Scroll with page toggle change
+    scrollWithPageToggle.addEventListener('change', async () => {
+        const scrollWithPage = scrollWithPageToggle.checked;
+        await chrome.storage.sync.set({ scrollWithPage });
+        showToast(scrollWithPage ? 'Chat scrolls with page' : 'Chat stays fixed', 'success');
+
+        // Notify all tabs about the setting change
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(tab => {
+                chrome.tabs.sendMessage(tab.id, {
+                    action: 'updateScrollWithPage',
+                    scrollWithPage: scrollWithPage
+                }).catch(() => {
+                    // Tab might not have content script loaded
+                });
+            });
+        });
     });
 
     // Add model button click
@@ -259,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function loadSettings() {
-        const settings = await chrome.storage.sync.get(['apiKey', 'model', 'customModels']);
+        const settings = await chrome.storage.sync.get(['apiKey', 'model', 'customModels', 'scrollWithPage']);
 
         if (settings.apiKey) {
             apiKeyInput.value = settings.apiKey;
@@ -275,6 +295,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (settings.model) {
             modelSelect.value = settings.model;
         }
+
+        // Load scroll with page preference (default: true - scrolls with page)
+        scrollWithPageToggle.checked = settings.scrollWithPage !== false;
 
         updateStatus(settings.apiKey);
     }
