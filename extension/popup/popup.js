@@ -22,6 +22,10 @@ const DEFAULT_MODELS = [
 ];
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Load version from manifest.json
+    const manifest = chrome.runtime.getManifest();
+    document.getElementById('version').textContent = `v${manifest.version}`;
+
     const apiKeyInput = document.getElementById('api-key');
     const modelSelect = document.getElementById('model-select');
     const toggleKeyBtn = document.getElementById('toggle-key');
