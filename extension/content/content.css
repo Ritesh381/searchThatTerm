@@ -34,7 +34,7 @@
   justify-content: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   animation: stt-fade-in 0.15s ease-out;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .stt-trigger-btn:hover {
@@ -60,7 +60,8 @@
   border: 1px solid var(--stt-border);
   border-radius: 16px;
   box-shadow: var(--stt-shadow), var(--stt-glow);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
   animation: stt-slide-up 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   display: flex;
@@ -98,7 +99,11 @@
   justify-content: space-between;
   padding: 14px 16px;
   border-bottom: 1px solid rgba(124, 58, 237, 0.15);
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.08) 0%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(124, 58, 237, 0.08) 0%,
+    transparent 100%
+  );
 }
 
 .stt-header-left {
@@ -218,6 +223,7 @@
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-style: italic;
@@ -272,7 +278,6 @@
 }
 
 @keyframes stt-blink {
-
   0%,
   50% {
     opacity: 1;
@@ -488,13 +493,203 @@
   font-weight: 600;
 }
 
+.stt-explanation em,
+.stt-message-assistant em {
+  font-style: italic;
+  color: var(--stt-text-secondary);
+}
+
+/* Inline code */
+.stt-inline-code,
 .stt-explanation code,
 .stt-message-assistant code {
   background: rgba(124, 58, 237, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-family: "SF Mono", Monaco, "Courier New", monospace;
   font-size: 0.9em;
+}
+
+/* Code blocks */
+.stt-code-block {
+  position: relative;
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(15, 15, 25, 0.9);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.stt-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(124, 58, 237, 0.15);
+  border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+  box-sizing: border-box;
+}
+
+.stt-code-lang {
+  color: var(--stt-primary-hover);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stt-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: var(--stt-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.stt-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--stt-text-primary);
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+.stt-copy-btn svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.stt-copy-btn svg rect,
+.stt-copy-btn svg path,
+.stt-copy-btn svg polyline {
+  stroke: currentColor;
+  fill: none;
+}
+
+/* Icon styling for unicode characters */
+.stt-copy-btn .stt-icon-copy,
+.stt-copy-btn .stt-icon-check {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Icon visibility - show copy by default, check when success */
+.stt-copy-btn .stt-icon-copy {
+  display: inline;
+}
+
+.stt-copy-btn .stt-icon-check {
+  display: none;
+}
+
+.stt-copy-btn.stt-copy-success .stt-icon-copy {
+  display: none;
+}
+
+.stt-copy-btn.stt-copy-success .stt-icon-check {
+  display: inline;
+}
+
+.stt-copy-btn.stt-copy-success {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--stt-success);
+}
+
+.stt-code-block pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.stt-code-block code {
+  font-family: "SF Mono", Monaco, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e4e4e7;
+  background: transparent !important;
+  padding: 0 !important;
+  white-space: pre;
+}
+
+/* Headers */
+.stt-h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--stt-text-primary);
+  margin: 16px 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.stt-h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--stt-text-primary);
+  margin: 14px 0 6px 0;
+}
+
+.stt-h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--stt-primary-hover);
+  margin: 12px 0 4px 0;
+}
+
+/* Lists */
+.stt-ul,
+.stt-ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.stt-li,
+.stt-oli {
+  margin: 4px 0;
+  line-height: 1.5;
+  color: var(--stt-text-primary);
+}
+
+.stt-ul .stt-li::marker {
+  color: var(--stt-primary);
+}
+
+.stt-ol .stt-oli::marker {
+  color: var(--stt-primary);
+  font-weight: 600;
+}
+
+/* Blockquote */
+.stt-blockquote {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--stt-primary);
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 0 6px 6px 0;
+  color: var(--stt-text-secondary);
+  font-style: italic;
+}
+
+/* Horizontal rule */
+.stt-hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(124, 58, 237, 0.4),
+    transparent
+  );
+  margin: 16px 0;
 }
 
 /* Hide when not active */

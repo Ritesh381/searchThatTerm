@@ -38,7 +38,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'chat') {
-    handleStreamingChat(request.popupId, request.messages, request.selectedText, sender.tab.id);
+    handleStreamingChat(
+      request.popupId, 
+      request.messages, 
+      request.selectedText,
+      request.contextText,
+      request.nearestHeading,
+      request.pageTitle,
+      request.pageDomain,
+      sender.tab.id
+    );
     sendResponse({ success: true, streaming: true });
     return true;
   }
@@ -93,14 +102,29 @@ Format your response as:
     userPrompt += `\n\n**Surrounding Text:**\n"${context}"`;
   }
 
-  await streamOpenRouter(settings.apiKey, settings.model, [
+  const messages = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt }
-  ], tabId, popupId, 'explanation');
+  ];
+
+  // Log to service worker console
+  console.log('=== OpenRouter API Request (Explanation) ===');
+  console.log('Model:', settings.model);
+  console.log('Messages:', JSON.stringify(messages, null, 2));
+  
+  // Send to content script for website console
+  chrome.tabs.sendMessage(tabId, {
+    action: 'debugPrompt',
+    type: 'explanation',
+    model: settings.model,
+    messages: messages
+  }).catch(() => {});
+
+  await streamOpenRouter(settings.apiKey, settings.model, messages, tabId, popupId, 'explanation');
 }
 
 // Stream chat conversation
-async function handleStreamingChat(popupId, messages, selectedText, tabId) {
+async function handleStreamingChat(popupId, messages, selectedText, contextText, nearestHeading, pageTitle, pageDomain, tabId) {
   const settings = await chrome.storage.sync.get(['apiKey', 'model']);
 
   if (!settings.apiKey) {
@@ -108,7 +132,29 @@ async function handleStreamingChat(popupId, messages, selectedText, tabId) {
     return;
   }
 
-  const systemPrompt = `You are a knowledgeable research assistant helping someone understand a specific topic. The user initially selected this text: "${selectedText}"
+  // Build comprehensive system prompt with all context (never gets trimmed)
+  let systemPrompt = `You are a knowledgeable research assistant helping someone understand a specific topic.
+
+**Original Query Context:**
+- Selected Text: "${selectedText}"`;
+  
+  // Add page context
+  if (pageTitle || pageDomain) {
+    if (pageTitle) systemPrompt += `\n- Page Title: "${pageTitle}"`;
+    if (pageDomain) systemPrompt += `\n- Domain: ${pageDomain}`;
+  }
+  
+  // Add section heading
+  if (nearestHeading) {
+    systemPrompt += `\n- Section: "${nearestHeading}"`;
+  }
+  
+  // Add surrounding text context
+  if (contextText && contextText !== selectedText) {
+    systemPrompt += `\n- Surrounding Text: "${contextText}"`;
+  }
+  
+  systemPrompt += `
 
 Your role:
 - Answer questions thoroughly but concisely
@@ -121,6 +167,19 @@ Your role:
     { role: 'system', content: systemPrompt },
     ...messages
   ];
+
+  // Log to service worker console
+  console.log('=== OpenRouter API Request (Chat) ===');
+  console.log('Model:', settings.model);
+  console.log('Messages:', JSON.stringify(formattedMessages, null, 2));
+  
+  // Send to content script for website console
+  chrome.tabs.sendMessage(tabId, {
+    action: 'debugPrompt',
+    type: 'chat',
+    model: settings.model,
+    messages: formattedMessages
+  }).catch(() => {});
 
   await streamOpenRouter(settings.apiKey, settings.model, formattedMessages, tabId, popupId, 'chat');
 }
@@ -141,7 +200,8 @@ async function streamOpenRouter(apiKey, model, messages, tabId, popupId, message
       body: JSON.stringify({
         model: model,
         messages: messages,
-        max_tokens: 500,
+        // Use 500 for quick explanation, 2000 for deep dive chat (allow longer responses)
+        max_tokens: messageType === 'chat' ? 2000 : 500,
         temperature: 0.7,
         stream: true  // Enable streaming!
       })
