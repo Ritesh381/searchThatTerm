@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const apiKeyInput = document.getElementById('api-key');
     const modelSelect = document.getElementById('model-select');
     const toggleKeyBtn = document.getElementById('toggle-key');
-    const saveBtn = document.getElementById('save-btn');
     const statusIndicator = document.getElementById('status-indicator');
     const statusText = document.getElementById('status-text');
     const toast = document.getElementById('toast');
@@ -267,20 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('Model: ' + label, 'success');
     });
 
-    // Save settings (for API key)
-    saveBtn.addEventListener('click', async () => {
-        const apiKey = apiKeyInput.value.trim();
-        const model = modelSelect.value;
 
-        if (!apiKey) {
-            showToast('Please enter your API key', 'error');
-            return;
-        }
-
-        await chrome.storage.sync.set({ apiKey, model });
-        updateStatus(apiKey);
-        showToast('Settings saved successfully!', 'success');
-    });
 
     async function loadSettings() {
         const settings = await chrome.storage.sync.get(['apiKey', 'model', 'customModels', 'scrollWithPage']);

@@ -2,32 +2,36 @@
 
 // Default settings (pre-configured from .env)
 const DEFAULT_SETTINGS = {
-  apiKey: '',
-  model: 'xiaomi/mimo-v2-flash:free',
-  theme: 'dark'
+  apiKey: "",
+  model: "xiaomi/mimo-v2-flash:free",
+  theme: "dark",
 };
 
 // Initialize settings on install
 chrome.runtime.onInstalled.addListener(async () => {
-  const existingSettings = await chrome.storage.sync.get(['apiKey', 'model', 'theme']);
+  const existingSettings = await chrome.storage.sync.get([
+    "apiKey",
+    "model",
+    "theme",
+  ]);
 
   const settings = {
     apiKey: existingSettings.apiKey || DEFAULT_SETTINGS.apiKey,
     model: existingSettings.model || DEFAULT_SETTINGS.model,
-    theme: existingSettings.theme || DEFAULT_SETTINGS.theme
+    theme: existingSettings.theme || DEFAULT_SETTINGS.theme,
   };
 
   await chrome.storage.sync.set(settings);
-  console.log('SearchThatTerm: Settings initialized', settings);
+  // console.log('SearchThatTerm: Settings initialized', settings);
 });
 
 // Handle messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'getExplanation') {
+  if (request.action === "getExplanation") {
     handleStreamingExplanation(
       request.popupId,
-      request.text, 
-      request.context, 
+      request.text,
+      request.context,
       request.nearestHeading,
       request.pageTitle,
       request.pageDomain,
@@ -37,10 +41,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  if (request.action === 'chat') {
+  if (request.action === "chat") {
     handleStreamingChat(
-      request.popupId, 
-      request.messages, 
+      request.popupId,
+      request.messages,
       request.selectedText,
       request.contextText,
       request.nearestHeading,
@@ -52,20 +56,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  if (request.action === 'getSettings') {
-    chrome.storage.sync.get(['apiKey', 'model', 'theme'])
-      .then(settings => sendResponse({ success: true, data: settings }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
+  if (request.action === "getSettings") {
+    chrome.storage.sync
+      .get(["apiKey", "model", "theme"])
+      .then((settings) => sendResponse({ success: true, data: settings }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
     return true;
   }
 });
 
 // Stream explanation for selected text
-async function handleStreamingExplanation(popupId, text, context, nearestHeading, pageTitle, pageDomain, tabId) {
-  const settings = await chrome.storage.sync.get(['apiKey', 'model']);
+async function handleStreamingExplanation(
+  popupId,
+  text,
+  context,
+  nearestHeading,
+  pageTitle,
+  pageDomain,
+  tabId
+) {
+  const settings = await chrome.storage.sync.get(["apiKey", "model"]);
 
   if (!settings.apiKey) {
-    sendStreamUpdate(tabId, popupId, { type: 'error', error: 'API key not configured. Click the extension icon to add your OpenRouter API key.' });
+    sendStreamUpdate(tabId, popupId, {
+      type: "error",
+      error:
+        "API key not configured. Click the extension icon to add your OpenRouter API key.",
+    });
     return;
   }
 
@@ -84,51 +101,72 @@ Format your response as:
 
   // Build user prompt with all context
   let userPrompt = `Explain this term/phrase: "${text}"`;
-  
+
   // Add page context
   if (pageTitle || pageDomain) {
     userPrompt += `\n\n**Page Context:**`;
     if (pageTitle) userPrompt += `\n- Page Title: "${pageTitle}"`;
     if (pageDomain) userPrompt += `\n- Domain: ${pageDomain}`;
   }
-  
+
   // Add section heading
   if (nearestHeading) {
     userPrompt += `\n- Section: "${nearestHeading}"`;
   }
-  
+
   // Add surrounding text context
   if (context && context !== text) {
     userPrompt += `\n\n**Surrounding Text:**\n"${context}"`;
   }
 
   const messages = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt }
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
   ];
 
   // Log to service worker console
-  console.log('=== OpenRouter API Request (Explanation) ===');
-  console.log('Model:', settings.model);
-  console.log('Messages:', JSON.stringify(messages, null, 2));
-  
-  // Send to content script for website console
-  chrome.tabs.sendMessage(tabId, {
-    action: 'debugPrompt',
-    type: 'explanation',
-    model: settings.model,
-    messages: messages
-  }).catch(() => {});
+  // console.log('=== OpenRouter API Request (Explanation) ===');
+  // console.log('Model:', settings.model);
+  // console.log('Messages:', JSON.stringify(messages, null, 2));
 
-  await streamOpenRouter(settings.apiKey, settings.model, messages, tabId, popupId, 'explanation');
+  // Send to content script for website console
+  chrome.tabs
+    .sendMessage(tabId, {
+      action: "debugPrompt",
+      type: "explanation",
+      model: settings.model,
+      messages: messages,
+    })
+    .catch(() => {});
+
+  await streamOpenRouter(
+    settings.apiKey,
+    settings.model,
+    messages,
+    tabId,
+    popupId,
+    "explanation"
+  );
 }
 
 // Stream chat conversation
-async function handleStreamingChat(popupId, messages, selectedText, contextText, nearestHeading, pageTitle, pageDomain, tabId) {
-  const settings = await chrome.storage.sync.get(['apiKey', 'model']);
+async function handleStreamingChat(
+  popupId,
+  messages,
+  selectedText,
+  contextText,
+  nearestHeading,
+  pageTitle,
+  pageDomain,
+  tabId
+) {
+  const settings = await chrome.storage.sync.get(["apiKey", "model"]);
 
   if (!settings.apiKey) {
-    sendStreamUpdate(tabId, popupId, { type: 'error', error: 'API key not configured.' });
+    sendStreamUpdate(tabId, popupId, {
+      type: "error",
+      error: "API key not configured.",
+    });
     return;
   }
 
@@ -137,23 +175,23 @@ async function handleStreamingChat(popupId, messages, selectedText, contextText,
 
 **Original Query Context:**
 - Selected Text: "${selectedText}"`;
-  
+
   // Add page context
   if (pageTitle || pageDomain) {
     if (pageTitle) systemPrompt += `\n- Page Title: "${pageTitle}"`;
     if (pageDomain) systemPrompt += `\n- Domain: ${pageDomain}`;
   }
-  
+
   // Add section heading
   if (nearestHeading) {
     systemPrompt += `\n- Section: "${nearestHeading}"`;
   }
-  
+
   // Add surrounding text context
   if (contextText && contextText !== selectedText) {
     systemPrompt += `\n- Surrounding Text: "${contextText}"`;
   }
-  
+
   systemPrompt += `
 
 Your role:
@@ -164,82 +202,111 @@ Your role:
 - Be conversational and helpful`;
 
   const formattedMessages = [
-    { role: 'system', content: systemPrompt },
-    ...messages
+    { role: "system", content: systemPrompt },
+    ...messages,
   ];
 
   // Log to service worker console
-  console.log('=== OpenRouter API Request (Chat) ===');
-  console.log('Model:', settings.model);
-  console.log('Messages:', JSON.stringify(formattedMessages, null, 2));
-  
-  // Send to content script for website console
-  chrome.tabs.sendMessage(tabId, {
-    action: 'debugPrompt',
-    type: 'chat',
-    model: settings.model,
-    messages: formattedMessages
-  }).catch(() => {});
+  // console.log('=== OpenRouter API Request (Chat) ===');
+  // console.log('Model:', settings.model);
+  // console.log('Messages:', JSON.stringify(formattedMessages, null, 2));
 
-  await streamOpenRouter(settings.apiKey, settings.model, formattedMessages, tabId, popupId, 'chat');
+  // Send to content script for website console
+  chrome.tabs
+    .sendMessage(tabId, {
+      action: "debugPrompt",
+      type: "chat",
+      model: settings.model,
+      messages: formattedMessages,
+    })
+    .catch(() => {});
+
+  await streamOpenRouter(
+    settings.apiKey,
+    settings.model,
+    formattedMessages,
+    tabId,
+    popupId,
+    "chat"
+  );
 }
 
 // Stream from OpenRouter API
-async function streamOpenRouter(apiKey, model, messages, tabId, popupId, messageType) {
+async function streamOpenRouter(
+  apiKey,
+  model,
+  messages,
+  tabId,
+  popupId,
+  messageType
+) {
   try {
-    sendStreamUpdate(tabId, popupId, { type: 'start', messageType });
+    sendStreamUpdate(tabId, popupId, { type: "start", messageType });
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'chrome-extension://searchthatterm',
-        'X-Title': 'SearchThatTerm'
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        // Use 500 for quick explanation, 2000 for deep dive chat (allow longer responses)
-        max_tokens: messageType === 'chat' ? 2000 : 500,
-        temperature: 0.7,
-        stream: true  // Enable streaming!
-      })
-    });
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": "chrome-extension://searchthatterm",
+          "X-Title": "SearchThatTerm",
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          // Use 500 for quick explanation, 2000 for deep dive chat (allow longer responses)
+          max_tokens: messageType === "chat" ? 2000 : 500,
+          temperature: 0.7,
+          stream: true, // Enable streaming!
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
+      throw new Error(
+        errorData.error?.message || `API request failed: ${response.status}`
+      );
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let fullContent = '';
-    let buffer = '';
+    let fullContent = "";
+    let buffer = "";
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
-        sendStreamUpdate(tabId, popupId, { type: 'done', content: fullContent, messageType });
+        sendStreamUpdate(tabId, popupId, {
+          type: "done",
+          content: fullContent,
+          messageType,
+        });
         break;
       }
 
       buffer += decoder.decode(value, { stream: true });
 
       // Process complete SSE lines
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // Keep incomplete line in buffer
 
       for (const line of lines) {
         const trimmedLine = line.trim();
 
-        if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+        if (!trimmedLine || !trimmedLine.startsWith("data: ")) continue;
 
         const data = trimmedLine.slice(6); // Remove 'data: ' prefix
 
-        if (data === '[DONE]') {
-          sendStreamUpdate(tabId, popupId, { type: 'done', content: fullContent, messageType });
+        if (data === "[DONE]") {
+          sendStreamUpdate(tabId, popupId, {
+            type: "done",
+            content: fullContent,
+            messageType,
+          });
           return;
         }
 
@@ -249,23 +316,34 @@ async function streamOpenRouter(apiKey, model, messages, tabId, popupId, message
 
           if (delta) {
             fullContent += delta;
-            sendStreamUpdate(tabId, popupId, { type: 'chunk', chunk: delta, content: fullContent, messageType });
+            sendStreamUpdate(tabId, popupId, {
+              type: "chunk",
+              chunk: delta,
+              content: fullContent,
+              messageType,
+            });
           }
         } catch (e) {
           // Skip malformed JSON chunks
-          console.log('Skipping malformed chunk:', data);
+          // console.log('Skipping malformed chunk:', data);
         }
       }
     }
   } catch (error) {
-    console.error('Streaming error:', error);
-    sendStreamUpdate(tabId, popupId, { type: 'error', error: error.message, messageType });
+    console.error("Streaming error:", error);
+    sendStreamUpdate(tabId, popupId, {
+      type: "error",
+      error: error.message,
+      messageType,
+    });
   }
 }
 
 // Send stream update to content script (with popupId for targeting)
 function sendStreamUpdate(tabId, popupId, data) {
-  chrome.tabs.sendMessage(tabId, { action: 'streamUpdate', popupId, ...data }).catch(() => {
-    // Tab might be closed, ignore error
-  });
+  chrome.tabs
+    .sendMessage(tabId, { action: "streamUpdate", popupId, ...data })
+    .catch(() => {
+      // Tab might be closed, ignore error
+    });
 }

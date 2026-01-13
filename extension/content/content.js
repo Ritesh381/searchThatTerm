@@ -78,7 +78,7 @@
   document.addEventListener("mousedown", handleMouseDown);
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("mousemove", handleDragMove);
-  
+
   // Handle copy button clicks (event delegation)
   document.addEventListener("click", handleCopyButtonClick);
 
@@ -87,28 +87,28 @@
     if (message.action === "streamUpdate") {
       handleStreamUpdate(message);
     }
-    
+
     // Debug: Log the exact prompt being sent to OpenRouter
     if (message.action === "debugPrompt") {
-      console.log('%c=== SearchThatTerm: OpenRouter API Request ===', 'color: #a855f7; font-weight: bold; font-size: 14px;');
-      console.log('%cType:', 'color: #22c55e; font-weight: bold;', message.type);
-      console.log('%cModel:', 'color: #22c55e; font-weight: bold;', message.model);
-      console.log('%cMessages:', 'color: #22c55e; font-weight: bold;');
+      // console.log('%c=== SearchThatTerm: OpenRouter API Request ===', 'color: #a855f7; font-weight: bold; font-size: 14px;');
+      // console.log('%cType:', 'color: #22c55e; font-weight: bold;', message.type);
+      // console.log('%cModel:', 'color: #22c55e; font-weight: bold;', message.model);
+      // console.log('%cMessages:', 'color: #22c55e; font-weight: bold;');
       message.messages.forEach((msg, i) => {
-        console.log(`  [${i}] ${msg.role}:`, msg.content);
+        // console.log(`  [${i}] ${msg.role}:`, msg.content);
       });
-      console.log('%c==========================================', 'color: #a855f7; font-weight: bold;');
+      // console.log('%c==========================================', 'color: #a855f7; font-weight: bold;');
     }
 
     // Handle scroll with page preference update from popup
-    if (message.action === 'updateScrollWithPage') {
+    if (message.action === "updateScrollWithPage") {
       scrollWithPage = message.scrollWithPage;
       updateAllPopupsPositioning();
     }
   });
 
   // Load scroll with page preference on init
-  chrome.storage.sync.get(['scrollWithPage'], (settings) => {
+  chrome.storage.sync.get(["scrollWithPage"], (settings) => {
     scrollWithPage = settings.scrollWithPage !== false; // Default to true
   });
 
@@ -117,9 +117,9 @@
     // Update trigger button if exists
     if (triggerButton) {
       if (scrollWithPage) {
-        triggerButton.classList.remove('stt-fixed');
+        triggerButton.classList.remove("stt-fixed");
       } else {
-        triggerButton.classList.add('stt-fixed');
+        triggerButton.classList.add("stt-fixed");
         // Convert from page coordinates to viewport coordinates
         const currentLeft = parseInt(triggerButton.style.left);
         const currentTop = parseInt(triggerButton.style.top);
@@ -131,17 +131,20 @@
     // Update all popups
     popups.forEach((popup) => {
       if (!popup.element) return;
-      
+
       if (scrollWithPage) {
-        popup.element.classList.remove('stt-fixed');
+        popup.element.classList.remove("stt-fixed");
       } else {
-        popup.element.classList.add('stt-fixed');
+        popup.element.classList.add("stt-fixed");
         // Convert from page coordinates to viewport coordinates
         const currentLeft = parseInt(popup.element.style.left);
         const currentTop = parseInt(popup.element.style.top);
         popup.element.style.left = `${currentLeft - window.scrollX}px`;
         popup.element.style.top = `${currentTop - window.scrollY}px`;
-        popup.position = { left: popup.element.style.left, top: popup.element.style.top };
+        popup.position = {
+          left: popup.element.style.left,
+          top: popup.element.style.top,
+        };
       }
     });
   }
@@ -329,14 +332,20 @@
     e.preventDefault();
 
     let newX, newY;
-    
+
     if (!scrollWithPage) {
       // Fixed positioning - use client coordinates
-      newX = Math.min(e.clientX - dragOffsetX, window.innerWidth - popup.element.offsetWidth);
+      newX = Math.min(
+        e.clientX - dragOffsetX,
+        window.innerWidth - popup.element.offsetWidth
+      );
       newY = Math.max(0, e.clientY - dragOffsetY);
     } else {
       // Absolute positioning - use page coordinates
-      newX = Math.min(e.pageX - dragOffsetX, window.innerWidth + window.scrollX - popup.element.offsetWidth);
+      newX = Math.min(
+        e.pageX - dragOffsetX,
+        window.innerWidth + window.scrollX - popup.element.offsetWidth
+      );
       newY = Math.max(0, e.pageY - dragOffsetY);
     }
 
@@ -418,31 +427,34 @@
 
   // Handle copy button clicks for code blocks
   function handleCopyButtonClick(e) {
-    const copyBtn = e.target.closest('.stt-copy-btn');
+    const copyBtn = e.target.closest(".stt-copy-btn");
     if (!copyBtn) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       // Decode the base64 code data
       const codeData = copyBtn.dataset.code;
       const code = decodeURIComponent(escape(atob(codeData)));
-      
+
       // Copy to clipboard
-      navigator.clipboard.writeText(code).then(() => {
-        // Show success feedback (CSS handles icon swap)
-        copyBtn.classList.add('stt-copy-success');
-        
-        // Reset after 2 seconds
-        setTimeout(() => {
-          copyBtn.classList.remove('stt-copy-success');
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy:', err);
-      });
+      navigator.clipboard
+        .writeText(code)
+        .then(() => {
+          // Show success feedback (CSS handles icon swap)
+          copyBtn.classList.add("stt-copy-success");
+
+          // Reset after 2 seconds
+          setTimeout(() => {
+            copyBtn.classList.remove("stt-copy-success");
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error("Failed to copy:", err);
+        });
     } catch (err) {
-      console.error('Copy error:', err);
+      console.error("Copy error:", err);
     }
   }
 
@@ -984,8 +996,11 @@
     // Send full conversation history (all messages including AI's responses)
     // Limit to 10 most recent messages (queue approach - remove oldest if over limit)
     const MAX_HISTORY = 10;
-    let apiMessages = popup.chatMessages.map((m) => ({ role: m.role, content: m.content }));
-    
+    let apiMessages = popup.chatMessages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     // If more than MAX_HISTORY messages, keep only the most recent ones
     if (apiMessages.length > MAX_HISTORY) {
       apiMessages = apiMessages.slice(-MAX_HISTORY);
@@ -1010,18 +1025,23 @@
     // First, handle code blocks BEFORE escaping HTML
     // Store code blocks temporarily to prevent them from being escaped
     const codeBlocks = [];
-    let processed = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
-      const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
-      codeBlocks.push({ lang: lang || '', code: code.trim() });
-      return placeholder;
-    });
+    let processed = text.replace(
+      /```(\w*)\n?([\s\S]*?)```/g,
+      (match, lang, code) => {
+        const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+        codeBlocks.push({ lang: lang || "", code: code.trim() });
+        return placeholder;
+      }
+    );
 
     // Escape HTML for the rest of the text
     processed = escapeHtml(processed);
 
     // Restore code blocks with proper formatting (with copy button)
     codeBlocks.forEach((block, i) => {
-      const langLabel = `<span class="stt-code-lang">${block.lang || ''}</span>`;
+      const langLabel = `<span class="stt-code-lang">${
+        block.lang || ""
+      }</span>`;
       const escapedCode = escapeHtml(block.code);
       // Store raw code in data attribute for copying (base64 to preserve special chars)
       const codeData = btoa(unescape(encodeURIComponent(block.code)));
@@ -1041,40 +1061,67 @@
     });
 
     // Headers (must be at start of line)
-    processed = processed.replace(/^### (.*?)$/gm, '<h4 class="stt-h4">$1</h4>');
+    processed = processed.replace(
+      /^### (.*?)$/gm,
+      '<h4 class="stt-h4">$1</h4>'
+    );
     processed = processed.replace(/^## (.*?)$/gm, '<h3 class="stt-h3">$1</h3>');
     processed = processed.replace(/^# (.*?)$/gm, '<h2 class="stt-h2">$1</h2>');
 
     // Bold and italic
-    processed = processed.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
-    processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    processed = processed.replace(
+      /\*\*\*(.*?)\*\*\*/g,
+      "<strong><em>$1</em></strong>"
+    );
+    processed = processed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    processed = processed.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
     // Inline code (single backticks)
-    processed = processed.replace(/`([^`]+)`/g, '<code class="stt-inline-code">$1</code>');
+    processed = processed.replace(
+      /`([^`]+)`/g,
+      '<code class="stt-inline-code">$1</code>'
+    );
 
     // Blockquotes
-    processed = processed.replace(/^&gt; (.*?)$/gm, '<blockquote class="stt-blockquote">$1</blockquote>');
+    processed = processed.replace(
+      /^&gt; (.*?)$/gm,
+      '<blockquote class="stt-blockquote">$1</blockquote>'
+    );
 
     // Horizontal rule
     processed = processed.replace(/^---$/gm, '<hr class="stt-hr">');
 
     // Unordered lists (- or *)
-    processed = processed.replace(/^[\-\*] (.*?)$/gm, '<li class="stt-li">$1</li>');
+    processed = processed.replace(
+      /^[\-\*] (.*?)$/gm,
+      '<li class="stt-li">$1</li>'
+    );
     // Wrap consecutive li elements in ul
-    processed = processed.replace(/(<li class="stt-li">.*?<\/li>\n?)+/g, '<ul class="stt-ul">$&</ul>');
+    processed = processed.replace(
+      /(<li class="stt-li">.*?<\/li>\n?)+/g,
+      '<ul class="stt-ul">$&</ul>'
+    );
 
     // Ordered lists (1. 2. etc)
-    processed = processed.replace(/^\d+\. (.*?)$/gm, '<li class="stt-oli">$1</li>');
+    processed = processed.replace(
+      /^\d+\. (.*?)$/gm,
+      '<li class="stt-oli">$1</li>'
+    );
     // Wrap consecutive oli elements in ol
-    processed = processed.replace(/(<li class="stt-oli">.*?<\/li>\n?)+/g, '<ol class="stt-ol">$&</ol>');
+    processed = processed.replace(
+      /(<li class="stt-oli">.*?<\/li>\n?)+/g,
+      '<ol class="stt-ol">$&</ol>'
+    );
 
     // Line breaks (but not inside code blocks or after block elements)
-    processed = processed.replace(/\n/g, '<br>');
-    
+    processed = processed.replace(/\n/g, "<br>");
+
     // Clean up extra br tags after block elements
-    processed = processed.replace(/<\/(h[234]|ul|ol|blockquote|div)><br>/g, '</$1>');
-    processed = processed.replace(/<br><(h[234]|ul|ol|blockquote)/g, '<$1');
+    processed = processed.replace(
+      /<\/(h[234]|ul|ol|blockquote|div)><br>/g,
+      "</$1>"
+    );
+    processed = processed.replace(/<br><(h[234]|ul|ol|blockquote)/g, "<$1");
 
     return processed;
   }
